@@ -13,7 +13,7 @@ CFLAGS   = -O3 -std=c++2a \
 LD       = x86_64-w64-mingw32-ld
 LDFLAGS  = -s \
 		   -epayload \
-		   -nostdlib
+		   -nostdlib --section-alignment=16 --file-alignment=16
 
 BIN      = Bin
 BUILD    = Build
@@ -24,9 +24,12 @@ SOURCES  = $(wildcard $(SOURCE)/*.cpp)
 OBJECT   = Build
 OBJECTS  = $(patsubst $(SOURCE)/%.cpp,$(OBJECT)/%.obj,$(SOURCES))
 
+all: $(BIN)
+all: $(BUILD)
 all: $(OBJECTS)
+target: $(TARGET)
 
-$(TARGET) : $(OBJECTS) $(BIN) $(BUILD)
+$(TARGET) : $(BIN) $(BUILD) $(OBJECTS)
 	$(LD) $(OBJECTS) $(LDFLAGS) -o $(BIN)/$(TARGET).exe
 
 $(OBJECT)/%.obj : $(SOURCE)/%.asm
@@ -35,11 +38,9 @@ $(OBJECT)/%.obj : $(SOURCE)/%.asm
 $(OBJECT)/%.obj : $(SOURCE)/%.cpp
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-.PHONY : $(BIN)
 $(BIN):
 	mkdir -p $@
 
-.PHONY : $(BUILD)
 $(BUILD):
 	mkdir -p $@
 

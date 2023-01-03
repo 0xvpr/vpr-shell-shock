@@ -146,10 +146,10 @@ class [[nodiscard]] Shellshock {
 public:
     Shellshock() noexcept
         : kernel32dll(GetKernel32())
+        , ntdll(0)
         , msvcrtdll(0)
         , user32dll(0)
         , ws2_32dll(0)
-        , ntdll(0)
         , f_LoadLibraryA(nullptr)
     {
     }
@@ -194,6 +194,16 @@ public:
     }
 public: // Load functions from specific libraries
     template <typename FuncPtr> [[nodiscard]]
+    __forceinline auto GetKernel32Func(LPCSTR param) const noexcept {
+        return reinterpret_cast<FuncPtr>(GetSymbolAddress(kernel32dll, param));
+    }
+
+    template <typename FuncPtr> [[nodiscard]]
+    __forceinline auto GetNtdllFunc(LPCSTR param) const noexcept {
+        return reinterpret_cast<FuncPtr>(GetSymbolAddress(ntdll, param));
+    }
+
+    template <typename FuncPtr> [[nodiscard]]
     __forceinline auto GetMsvcrtFunc(LPCSTR param) const noexcept {
         return reinterpret_cast<FuncPtr>(GetSymbolAddress(msvcrtdll, param));
     }
@@ -206,11 +216,6 @@ public: // Load functions from specific libraries
     template <typename FuncPtr> [[nodiscard]]
     __forceinline auto GetWs2_32Func(LPCSTR param) const noexcept {
         return reinterpret_cast<FuncPtr>(GetSymbolAddress(ws2_32dll, param));
-    }
-
-    template <typename FuncPtr> [[nodiscard]]
-    __forceinline auto GetNtdllFunc(LPCSTR param) const noexcept {
-        return reinterpret_cast<FuncPtr>(GetSymbolAddress(ntdll, param));
     }
 public: // TODO Return object copies
     [[nodiscard]]
@@ -315,10 +320,10 @@ private:
     }
 private:
     uintptr_t kernel32dll;
+    uintptr_t ntdll;
     uintptr_t msvcrtdll;
     uintptr_t user32dll;
     uintptr_t ws2_32dll;
-    uintptr_t ntdll;
     uintptr_t (WINAPI *  f_LoadLibraryA)(LPCSTR);
 };
 
