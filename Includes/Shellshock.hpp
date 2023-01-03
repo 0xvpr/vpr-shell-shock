@@ -20,11 +20,11 @@
 #include <inttypes.h>
 #endif  // VC_EXTRA_LEAN
 
-#define DEREF_64(name) *(DWORD64 *)(name)
-#define DEREF_32(name) *(DWORD *)(name)
-#define DEREF_16(name) *(WORD *)(name)
-#define DEREF_8(name)  *(BYTE *)(name)
-#define DEREF(name)    *(UINT_PTR *)(name)
+#define DEREF_64(name)       *(reinterpret_cast<DWORD64 *>(name))
+#define DEREF_32(name)       *(reinterpret_cast<DWORD *>(name))
+#define DEREF_16(name)       *(reinterpret_cast<WORD *>(name))
+#define DEREF_8(name)        *(reinterpret_cast<BYTE *>(name))
+#define DEREF(name)          *(reinterpret_cast<UINT_PTR *>(name))
 
 #ifndef STRING_OP
 #define STRING_OP(x)         #x

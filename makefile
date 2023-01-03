@@ -13,7 +13,7 @@ CFLAGS   = -O3 -std=c++2a \
 LD       = x86_64-w64-mingw32-ld
 LDFLAGS  = -s \
 		   -epayload \
-		   -nostdlib --section-alignment=16 --file-alignment=16
+		   -nostdlib
 
 BIN      = Bin
 BUILD    = Build
