@@ -1,3 +1,4 @@
+<h1 align="center">Shellshock</h1>
 <p align="center">
   <img src="https://img.shields.io/badge/Windows--x86__64-supported-green">
   <img src="https://img.shields.io/badge/Windows--x86-unsupported-red">
@@ -6,11 +7,7 @@
   <a href="https://mit-license.org/">
     <img src="https://img.shields.io/github/license/0xvpr/vpr-shell-shock?style=flat-square">
   </a>
-  <a href="https://github.com/0xvpr/vpr-shell-shock/commits/master">
-    <img src="https://img.shields.io/github/last-commit/0xvpr/vpr-shell-shock?style=flat-square">
-  </a>
   <br>
-  <h1 align="center">Shellshock</h1>
   <h3 align="center">Inspired by: Dark VortEx from bruteratel.com</h3>
   <br>
 </p>
