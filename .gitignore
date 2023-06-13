@@ -24,6 +24,3 @@ build
 
 # Exclude Image Files
 *.psd
-
-# Exclude Compiled executables
-shellshock

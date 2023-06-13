@@ -1,6 +1,8 @@
-## Inspired by: Dark VortEx from bruteratel.com
-
+### Inspired by: Dark VortEx from bruteratel.com
 <p align="center">
+  <br>
+  <h1 align="center">Shellshock</h1>
+  <br>
   <img src="https://img.shields.io/badge/Windows--x86__64-supported-green">
   <img src="https://img.shields.io/badge/Windows--x86-unsupported-red">
   <img src="https://img.shields.io/badge/Linux--x86__64-unsupported-red">
@@ -11,9 +13,6 @@
   <a href="https://github.com/0xvpr/vpr-shell-shock/commits/master">
     <img src="https://img.shields.io/github/last-commit/0xvpr/vpr-shell-shock?style=flat-square">
   </a>
-  <br>
-  <h1 align="center">Shellshock</h1>
-  <br>
 </p>
 
 ### How to use
