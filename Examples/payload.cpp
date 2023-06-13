@@ -3,13 +3,13 @@
  * Created:         January 2nd, 2023
  *
  * Updated by:      VPR
- * Updated:         January 3nd, 2023
+ * Updated:         June 12th, 2023
  *
  * Description:     A sample of a function that uses the Shellshock library
  *                  in order to produce position independent code.
 **/
 
-#include "Shellshock.hpp"
+#include "Shellshock/Shellshock.hpp"
 
 typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);
 
