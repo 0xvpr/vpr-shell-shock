@@ -1,7 +1,7 @@
 <h1 align="center">Shellshock</h1>
 <p align="center">
   <img src="https://img.shields.io/badge/Windows--x86__64-supported-green">
-  <img src="https://img.shields.io/badge/Windows--x86-unsupported-red">
+  <img src="https://img.shields.io/badge/Windows--x86-supported-green">
   <img src="https://img.shields.io/badge/Linux--x86__64-unsupported-red">
   <img src="https://img.shields.io/badge/Linux--x86-unsupported-red">
   <a href="https://mit-license.org/">
