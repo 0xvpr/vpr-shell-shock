@@ -49,6 +49,8 @@ namespace ss {
 
 constexpr unsigned KERNEL32DLL_HASH = 0x6A4ABC5B;
 
+typedef std::unique_ptr<const uint8_t[]> byte_ptr;
+
 typedef struct _UNICODE_STR {
     USHORT                  Length;
     USHORT                  MaximumLength;
@@ -357,29 +359,23 @@ class [[nodiscard]] payload_data {
 public:
     payload_data(const payload_data&) = delete;
     payload_data& operator=(const payload_data&) = delete;
-
+    
     payload_data(payload_data&& other) noexcept
-      : bytes_(other.bytes_)
+      : bytes_(std::move(other.bytes_))
       , size_(other.size_)
     {
-        other.bytes_ = nullptr;
         other.size_ = 0;
     }
 
     payload_data& operator=(payload_data&& other) noexcept {
         if (this != &other) {
-            delete[]     bytes_;
-            bytes_       = other.bytes_;
-            size_        = other.size_;
-            other.bytes_ = nullptr;
-            other.size_  = 0;
+            bytes_ = std::move(other.bytes_);
+            size_ = other.size_;
+
+            other.size_ = 0;
         }
 
         return *this;
-    }
-
-    ~payload_data() {
-        delete[] bytes_;
     }
 
     template <typename FPTR_T, typename STUB_T>
@@ -396,7 +392,7 @@ public:
             return false;
         }
 
-        file.write(reinterpret_cast<const char*>(bytes_), size_ & INT64_MAX);
+        file.write(reinterpret_cast<const char*>(bytes_.get()), size_ & INT64_MAX);
         if (file.fail()) {
             return false;
         }
@@ -404,18 +400,18 @@ public:
         return true;
     }
 
-    const uint8_t* bytes() const noexcept { return bytes_; }
+    const uint8_t* bytes() const noexcept { return bytes_.get(); }
     std::size_t size() const noexcept     { return size_;  }
 private:
-    const uint8_t* bytes_;
-    std::size_t    size_;
+    byte_ptr    bytes_;
+    std::size_t size_;
 
     template <typename FPTR_T>
     payload_data(FPTR_T payload, std::size_t size)
       : bytes_( new uint8_t[size] )
       , size_(size)
     {
-        std::memcpy(const_cast<uint8_t *>(bytes_), reinterpret_cast<void *>(payload), size_);
+        std::memcpy(const_cast<uint8_t *>(bytes_.get()), reinterpret_cast<void *>(payload), size_);
     }
 };
 
