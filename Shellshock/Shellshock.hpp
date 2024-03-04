@@ -363,16 +363,16 @@ public:
       , size_(other.size_)
     {
         other.bytes_ = nullptr;
-        *const_cast<std::size_t *>(&(other.size_)) = 0;
+        other.size_ = 0;
     }
 
     payload_data& operator=(payload_data&& other) noexcept {
         if (this != &other) {
-            delete[] bytes_;
-            bytes_  = other.bytes_;
-            *const_cast<std::size_t *>(&(size_)) = other.size_;
+            delete[]     bytes_;
+            bytes_       = other.bytes_;
+            size_        = other.size_;
             other.bytes_ = nullptr;
-            *const_cast<std::size_t *>(&(other.size_)) = 0;
+            other.size_  = 0;
         }
 
         return *this;
@@ -407,8 +407,8 @@ public:
     const uint8_t* bytes() const noexcept { return bytes_; }
     std::size_t size() const noexcept     { return size_;  }
 private:
-    const uint8_t*    bytes_;
-    const std::size_t size_;
+    const uint8_t* bytes_;
+    std::size_t    size_;
 
     template <typename FPTR_T>
     payload_data(FPTR_T payload, std::size_t size)
