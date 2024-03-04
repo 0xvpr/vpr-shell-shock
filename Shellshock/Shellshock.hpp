@@ -188,11 +188,7 @@ public:
             usCounter = ((PLDR_DATA_TABLE_ENTRY)val1)->BaseDllName.Length;
             do {
                 val3 = ror13( (DWORD)val3 );
-                if( *((BYTE *)val2) >= 'a' ) {
-                    val3 += *((ULONG_PTR *)val2) - 0x20;
-                } else {
-                    val3 += *((BYTE *)val2);
-                }
+                val3 += (*(BYTE *)val2) - ((*(BYTE *)val2) >= 'a') * 0x20;
                 val2++;
             } while (--usCounter);
 
@@ -201,6 +197,7 @@ public:
                 //return kernel32.dll if found
                 return (ULONG_PTR)((PLDR_DATA_TABLE_ENTRY)val1)->DllBase;
             }
+
             val1 = DEREF( val1 );
         }
 
