@@ -363,16 +363,16 @@ public:
       , size_(other.size_)
     {
         other.bytes_ = nullptr;
-        other.size_ = 0;
+        *const_cast<std::size_t *>(&(other.size_)) = 0;
     }
 
     payload_data& operator=(payload_data&& other) noexcept {
         if (this != &other) {
             delete[] bytes_;
-            bytes_   = other.bytes_;
-            size_    = other.size_;
+            bytes_  = other.bytes_;
+            *const_cast<std::size_t *>(&(size_)) = other.size_;
             other.bytes_ = nullptr;
-            other.size_ = 0;
+            *const_cast<std::size_t *>(&(other.size_)) = 0;
         }
 
         return *this;
@@ -396,7 +396,7 @@ public:
             return false;
         }
 
-        file.write(reinterpret_cast<const char*>(bytes_), size_);
+        file.write(reinterpret_cast<const char*>(bytes_), size_ & INT64_MAX);
         if (file.fail()) {
             return false;
         }
@@ -407,15 +407,15 @@ public:
     const uint8_t* bytes() const noexcept { return bytes_; }
     std::size_t size() const noexcept     { return size_;  }
 private:
-    uint8_t*    bytes_;
-    std::size_t size_;
+    const uint8_t*    bytes_;
+    const std::size_t size_;
 
     template <typename FPTR_T>
     payload_data(FPTR_T payload, std::size_t size)
       : bytes_( new uint8_t[size] )
       , size_(size)
     {
-        std::memcpy(bytes_, reinterpret_cast<void *>(payload), size_);
+        std::memcpy(const_cast<uint8_t *>(bytes_), reinterpret_cast<void *>(payload), size_);
     }
 };
 
