@@ -3,7 +3,7 @@
  * Created:         December 29th, 2022
  *
  * Updated by:      VPR
- * Updated:         June 12th, 2023
+ * Updated:         March 3rd, 2024
  *
  * Description:     Header only library for position independent shell-code generation.
  *
@@ -41,19 +41,19 @@
 constexpr unsigned KERNEL32DLL_HASH = 0x6A4ABC5B;
 
 typedef struct _UNICODE_STR {
-  USHORT                    Length;
-  USHORT                    MaximumLength;
-  PWSTR                     pBuffer;
+    USHORT                  Length;
+    USHORT                  MaximumLength;
+    PWSTR                   pBuffer;
 } UNICODE_STR, *PUNICODE_STR;
 
 typedef struct _PEB_LDR_DATA {
-   DWORD                    dwLength;
-   DWORD                    dwInitialized;
-   LPVOID                   lpSsHandle;
-   LIST_ENTRY               InLoadOrderModuleList;
-   LIST_ENTRY               InMemoryOrderModuleList;
-   LIST_ENTRY               InInitializationOrderModuleList;
-   LPVOID                   lpEntryInProgress;
+    DWORD                   dwLength;
+    DWORD                   dwInitialized;
+    LPVOID                  lpSsHandle;
+    LIST_ENTRY              InLoadOrderModuleList;
+    LIST_ENTRY              InMemoryOrderModuleList;
+    LIST_ENTRY              InInitializationOrderModuleList;
+    LPVOID                  lpEntryInProgress;
 } PEB_LDR_DATA, *PPEB_LDR_DATA;
 
 typedef struct _LDR_DATA_TABLE_ENTRY {
@@ -145,6 +145,7 @@ typedef struct __PEB {
 } _PEB, * _PPEB;
 
 class [[nodiscard]] Shellshock {
+    using LoadLibraryA_t = UINT_PTR (WINAPI *)(LPCSTR);
 public:
     Shellshock() noexcept
         : kernel32dll(GetKernel32())
@@ -158,12 +159,16 @@ public:
 
     // function to fetch the base address of kernel32.dll from the Process Environment Block
     [[nodiscard,gnu::always_inline]]
-    uintptr_t GetKernel32() const noexcept {
+    UINT_PTR GetKernel32() const noexcept {
         ULONG_PTR val1, val2, val3;
         USHORT usCounter;
 
-        // kernel32.dll is at gs:[60]
+        // TEB is at gs:[0x60] in 64 bit and fs:[0x30] in 32 bit
+#ifdef __WIN64
         auto _kernel32dll = __readgsqword( 0x60 );
+#else   
+        auto _kernel32dll = __readfsdword( 0x30 );
+#endif // 
 
         _kernel32dll = (ULONG_PTR)((_PPEB)_kernel32dll)->pLdr;
         val1 = (ULONG_PTR)((PPEB_LDR_DATA)_kernel32dll)->InMemoryOrderModuleList.Flink;
@@ -219,7 +224,7 @@ public: // Return object copies
     Shellshock& SetLoadLibraryA() noexcept {
         if (!f_LoadLibraryA) {
             char szLoadLibraryA[] = SS(LoadLibraryA);
-            f_LoadLibraryA = (uintptr_t(*)(LPCSTR))GetSymbolAddress(kernel32dll, szLoadLibraryA);
+            f_LoadLibraryA = reinterpret_cast<LoadLibraryA_t>(GetSymbolAddress(kernel32dll, szLoadLibraryA));
         }
 
         return *this;
@@ -235,12 +240,12 @@ public: // Return object copies
     }
 private:
     [[nodiscard,gnu::always_inline]]
-    uintptr_t GetSymbolAddress(uintptr_t hModule, LPCSTR lpProcName) const noexcept {
-        uintptr_t dllAddress = hModule;
-        uintptr_t symbolAddress = 0;
-        uintptr_t exportedAddressTable = 0;
-        uintptr_t namePointerTable = 0;
-        uintptr_t ordinalTable = 0;
+    UINT_PTR GetSymbolAddress(UINT_PTR hModule, LPCSTR lpProcName) const noexcept {
+        UINT_PTR dllAddress = hModule;
+        UINT_PTR symbolAddress = 0;
+        UINT_PTR exportedAddressTable = 0;
+        UINT_PTR namePointerTable = 0;
+        UINT_PTR ordinalTable = 0;
 
         if (hModule == 0) {
             return 0;
@@ -250,7 +255,7 @@ private:
         PIMAGE_DATA_DIRECTORY dataDirectory = nullptr;
         PIMAGE_EXPORT_DIRECTORY exportDirectory = nullptr;
 
-        ntHeaders = (PIMAGE_NT_HEADERS)(dllAddress + (UINT64)(((PIMAGE_DOS_HEADER)dllAddress)->e_lfanew));
+        ntHeaders = (PIMAGE_NT_HEADERS)(dllAddress + (UINT_PTR)(((PIMAGE_DOS_HEADER)dllAddress)->e_lfanew));
         dataDirectory = (PIMAGE_DATA_DIRECTORY)&ntHeaders->OptionalHeader.DataDirectory[ IMAGE_DIRECTORY_ENTRY_EXPORT ];
         exportDirectory = (PIMAGE_EXPORT_DIRECTORY)( dllAddress + dataDirectory->VirtualAddress );
             
@@ -258,16 +263,16 @@ private:
         namePointerTable = ( dllAddress + exportDirectory->AddressOfNames );
         ordinalTable = ( dllAddress + exportDirectory->AddressOfNameOrdinals );
 
-        if (((UINT64)lpProcName & 0xFFFF0000 ) == 0x00000000) {
-            exportedAddressTable += ( ( IMAGE_ORDINAL( (UINT64)lpProcName ) - exportDirectory->Base ) * sizeof(DWORD) );
-            symbolAddress = (uintptr_t)( dllAddress + DEREF_32(exportedAddressTable) );
+        if (((UINT_PTR)lpProcName & 0xFFFF0000 ) == 0x00000000) {
+            exportedAddressTable += ( ( IMAGE_ORDINAL( (UINT_PTR)lpProcName ) - exportDirectory->Base ) * sizeof(DWORD) );
+            symbolAddress = (UINT_PTR)( dllAddress + DEREF_32(exportedAddressTable) );
         } else {
             DWORD dwCounter = exportDirectory->NumberOfNames;
             while (dwCounter--) {
                 char* cpExportedFunctionName = (char *)(dllAddress + DEREF_32( namePointerTable));
                 if ( streq(cpExportedFunctionName, const_cast<char *>(lpProcName)) ) {
                     exportedAddressTable += ( DEREF_16( ordinalTable ) * sizeof(DWORD) );
-                    symbolAddress = (uintptr_t)(dllAddress + DEREF_32( exportedAddressTable ));
+                    symbolAddress = (UINT_PTR)(dllAddress + DEREF_32( exportedAddressTable ));
                     break;
                 }
 
@@ -281,7 +286,7 @@ private:
 
     [[nodiscard,gnu::always_inline]]
     DWORD ror13(DWORD d) const noexcept {
-        return _rotr(d, 13);
+        return (d >> 13) | (d << (19));
     }
 
     [[nodiscard,gnu::always_inline]]
@@ -305,12 +310,12 @@ private:
         return true;
     }
 private:
-    uintptr_t kernel32dll;
-    uintptr_t ntdll;
-    uintptr_t msvcrtdll;
-    uintptr_t user32dll;
-    uintptr_t ws2_32dll;
-    uintptr_t (WINAPI *  f_LoadLibraryA)(LPCSTR);
+    UINT_PTR        kernel32dll;
+    UINT_PTR        ntdll;
+    UINT_PTR        msvcrtdll;
+    UINT_PTR        user32dll;
+    UINT_PTR        ws2_32dll;
+    LoadLibraryA_t  f_LoadLibraryA;
 };
 
 #endif // SHELL_SHOCK_HEADER

@@ -9,7 +9,7 @@
  *                  in order to produce position independent code.
 **/
 
-#include "Shellshock/Shellshock.hpp"
+#include "../Shellshock/Shellshock.hpp"
 
 typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);
 
