@@ -160,24 +160,26 @@ public:
     // function to fetch the base address of kernel32.dll from the Process Environment Block
     [[nodiscard,gnu::always_inline]]
     UINT_PTR GetKernel32() const noexcept {
-        ULONG_PTR val1, val2, val3;
-        USHORT usCounter;
+        //ULONG_PTR val1   = 0;
+        //ULONG_PTR val2   = 0;
+        //ULONG_PTR val3   = 0;
+        USHORT usCounter = 0;
 
         // TEB is at gs:[0x60] in 64 bit and fs:[0x30] in 32 bit
 #ifdef __WIN64
         auto _kernel32dll = __readgsqword( 0x60 );
-#else   
+#else   // !__WIN64
         auto _kernel32dll = __readfsdword( 0x30 );
-#endif // 
+#endif  // __WIN64
 
         _kernel32dll = (ULONG_PTR)((_PPEB)_kernel32dll)->pLdr;
-        val1 = (ULONG_PTR)((PPEB_LDR_DATA)_kernel32dll)->InMemoryOrderModuleList.Flink;
+        ULONG_PTR val1 = (ULONG_PTR)((PPEB_LDR_DATA)_kernel32dll)->InMemoryOrderModuleList.Flink;
         while( val1 ) {
-            val2 = (ULONG_PTR)((PLDR_DATA_TABLE_ENTRY)val1)->BaseDllName.pBuffer;
-            usCounter = ((PLDR_DATA_TABLE_ENTRY)val1)->BaseDllName.Length;
-            val3 = 0;
+            ULONG_PTR val2 = (ULONG_PTR)((PLDR_DATA_TABLE_ENTRY)val1)->BaseDllName.pBuffer;
+            ULONG_PTR val3 = 0;
 
             //calculate the hash of kernel32.dll
+            usCounter = ((PLDR_DATA_TABLE_ENTRY)val1)->BaseDllName.Length;
             do {
                 val3 = ror13( (DWORD)val3 );
                 if( *((BYTE *)val2) >= 'a' ) {
@@ -270,7 +272,7 @@ private:
             DWORD dwCounter = exportDirectory->NumberOfNames;
             while (dwCounter--) {
                 char* cpExportedFunctionName = (char *)(dllAddress + DEREF_32( namePointerTable));
-                if ( streq(cpExportedFunctionName, const_cast<char *>(lpProcName)) ) {
+                if ( istreq(cpExportedFunctionName, const_cast<char *>(lpProcName)) ) {
                     exportedAddressTable += ( DEREF_16( ordinalTable ) * sizeof(DWORD) );
                     symbolAddress = (UINT_PTR)(dllAddress + DEREF_32( exportedAddressTable ));
                     break;
@@ -301,12 +303,13 @@ private:
     }
 
     [[nodiscard,gnu::always_inline]]
-    bool streq(char* _a, char* _b) const noexcept {
+    bool istreq(char* _a, char* _b) const noexcept {
         for (char *a = _a, *b = _b; *a; ++a, ++b) {
-            if (*a != *b) {
+            if ((*a | 0x20) != (*b | 0x20) ) {
                 return false;
             }
         }
+
         return true;
     }
 private:
