@@ -35,7 +35,7 @@ extern "C" auto payload() noexcept -> void {
 
 [[gnu::noinline]]
 int stub() {
-    return 1;
+    return 0;
 }
 
 int main() {

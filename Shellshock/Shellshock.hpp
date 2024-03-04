@@ -45,6 +45,16 @@
 #define    SZ                   MAKE_STRING_ZERO
 #endif  // SZ
 
+#ifndef    PAYLOAD_BEGIN
+#define    PAYLOAD_BEGIN extern "C" {
+#define    PAYLOAD_BEGIN_DEFINED 1
+#endif  // PAYLOAD_BEGIN
+
+#ifndef    PAYLOAD_END
+#define    PAYLOAD_END [[gnu::noinline]] int PAYLOAD_STUB() { return 1; }
+#define    PAYLOAD_END_DEFINED 1
+#endif  // PAYLOAD_END
+
 namespace ss {
 
 constexpr unsigned KERNEL32DLL_HASH = 0x6A4ABC5B;
