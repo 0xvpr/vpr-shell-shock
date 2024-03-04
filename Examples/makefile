@@ -1,41 +1,46 @@
-TARGET   = payload
+TARGET    = payload
 
-CC32     = i686-w64-mingw32-g++
-CC64     = x86_64-w64-mingw32-g++
-CFLAGS   = -O3 -std=c++2a \
-           -Wall -Wextra -Werror -Wshadow -Wconversion \
-           -nostdinc++ -fno-exceptions -fno-rtti -fno-ident \
-           -fvisibility=hidden -fPIC \
-           -I..
+CXX32     = i686-w64-mingw32-g++
+CXX64     = x86_64-w64-mingw32-g++
 
-LD32     = i686-w64-mingw32-ld
-LD64     = x86_64-w64-mingw32-ld
-LDFLAGS  =
+CXXFLAGS  = -Ofast -std=c++2a -static \
+            -Wall -Wextra -Werror -Wshadow -Wconversion \
+            -fPIC -fno-function-sections \
+            -fno-exceptions -fno-rtti \
+		    -fno-ident -fvisibility=hidden \
+            -I..
 
-ASM32    = nasm -f win32
-ASM64    = nasm -f win64
+LD32      = i686-w64-mingw32-ld
+LD64      = x86_64-w64-mingw32-ld
 
-SRC      = src
-BIN      = bin
-BUILD    = build
+ASM       = nasm
+ASM32     = $(ASM) -f win32
+ASM64     = $(ASM) -f win64
+
+SRC       = src
+BIN       = bin
+BUILD     = build
 
 all: target
 
-target: $(TARGET)32.obj $(TARGET)64.obj loader32.obj loader64.obj
-	$(LD32) $(LDFLAGS) loader32.obj payload32.obj -o example32.exe
-	$(LD64) $(LDFLAGS) loader64.obj payload64.obj -o example64.exe
+target: payload32.exe payload64.exe 
+loader: loader32.obj loader64.obj
+	$(LD32) $(LDFLAGS) loader32.obj -o loader32.exe
+	$(LD64) $(LDFLAGS) loader64.obj -o loader64.exe
 
 %32.obj: %32.asm
+	./$(TARGET)32.exe
 	$(ASM32) $^ -o $@
 
 %64.obj: %64.asm
+	./$(TARGET)64.exe
 	$(ASM64) $^ -o $@
 
-%32.obj : %.cpp
-	$(CC32) $(CFLAGS) -c $^ -o $@
+%32.exe : %.cpp
+	$(CXX32) $(CXXFLAGS) $^ -o $@
 
-%64.obj : %.cpp
-	$(CC64) $(CFLAGS) -c $^ -o $@
+%64.exe : %.cpp
+	$(CXX64) $(CXXFLAGS) $^ -o $@
 
 .PHONY : clean
 clean:

@@ -1,14 +1,15 @@
 global          entry
-extern          _payload
 
 section         .text
+payload:
+    incbin      "out32.bin"
 entry:
-    push    ebp
-    ;sub     rsp, 0x20
+    push        ebp
+;   sub         rsp, 0x20
 
-    call    _payload            ; Call to write_hello
-    xor     eax, eax
+    call        payload         ; Call to write_hello
+    xor         eax, eax
 
-    ;add     rsp, 0x20
-    pop     ebp                 ; Restore rdi
+;   add         rsp, 0x20
+    pop         ebp             ; Restore ebp
     ret                         ; Return back to entry

@@ -3,7 +3,7 @@
  * Created:         December 29th, 2022
  *
  * Updated by:      VPR
- * Updated:         March 3rd, 2024
+ * Updated:         March 4th, 2024
  *
  * Description:     Header only library for position independent shell-code generation.
  *
@@ -13,30 +13,39 @@
  *                  Without reading that tutorial, this project would not have been started
 **/
 
-#ifndef SHELL_SHOCK_HEADER
-#define SHELL_SHOCK_HEADER
+#ifndef    SHELL_SHOCK_HEADER
+#define    SHELL_SHOCK_HEADER
 
-#ifndef VC_EXTRA_LEAN
-#define VC_EXTRA_LEAN
-#include <windows.h>
-#include <inttypes.h>
+#ifndef    VC_EXTRA_LEAN
+#define    VC_EXTRA_LEAN
+#include   <windows.h>
 #endif  // VC_EXTRA_LEAN
 
-#define DEREF_64(name)       *(reinterpret_cast<DWORD64 *>(name))
-#define DEREF_32(name)       *(reinterpret_cast<DWORD *>(name))
-#define DEREF_16(name)       *(reinterpret_cast<WORD *>(name))
-#define DEREF_8(name)        *(reinterpret_cast<BYTE *>(name))
-#define DEREF(name)          *(reinterpret_cast<UINT_PTR *>(name))
+#include   <inttypes.h>
 
-#ifndef STRING_OP
-#define STRING_OP(x)         #x
+#include   <filesystem>
+#include   <fstream>
+
+#include   <cstring>
+#include   <cstdint>
+
+#define    DEREF_64(name)       *(reinterpret_cast<DWORD64 *>(name))
+#define    DEREF_32(name)       *(reinterpret_cast<DWORD *>(name))
+#define    DEREF_16(name)       *(reinterpret_cast<WORD *>(name))
+#define    DEREF_8(name)        *(reinterpret_cast<BYTE *>(name))
+#define    DEREF(name)          *(reinterpret_cast<UINT_PTR *>(name))
+
+#ifndef    STRING_OP
+#define    STRING_OP(x)         #x
 #endif  // STRING_OP
-#ifndef MAKE_STACK_STRING
-#define MAKE_STACK_STRING(x) STRING_OP(x)
-#endif  // MAKE_STACK_STRING
-#ifndef SS
-#define SS                   MAKE_STACK_STRING
-#endif  // SS
+#ifndef    MAKE_STRING_ZERO
+#define    MAKE_STRING_ZERO(x)  STRING_OP(x)
+#endif  // MAKE_STRING_ZERO
+#ifndef    SZ
+#define    SZ                   MAKE_STRING_ZERO
+#endif  // SZ
+
+namespace ss {
 
 constexpr unsigned KERNEL32DLL_HASH = 0x6A4ABC5B;
 
@@ -144,10 +153,10 @@ typedef struct __PEB {
    DWORD                    dwMinimumStackCommit;
 } _PEB, * _PPEB;
 
-class [[nodiscard]] Shellshock {
+class [[nodiscard]] shellshock {
     using LoadLibraryA_t = UINT_PTR (WINAPI *)(LPCSTR);
 public:
-    Shellshock() noexcept
+    shellshock() noexcept
         : kernel32dll(GetKernel32())
         , ntdll(0)
         , msvcrtdll(0)
@@ -160,9 +169,6 @@ public:
     // function to fetch the base address of kernel32.dll from the Process Environment Block
     [[nodiscard,gnu::always_inline]]
     UINT_PTR GetKernel32() const noexcept {
-        //ULONG_PTR val1   = 0;
-        //ULONG_PTR val2   = 0;
-        //ULONG_PTR val3   = 0;
         USHORT usCounter = 0;
 
         // TEB is at gs:[0x60] in 64 bit and fs:[0x30] in 32 bit
@@ -202,47 +208,74 @@ public:
     }
 public: // Load functions from specific libraries
     template <typename FuncPtr> [[nodiscard,gnu::always_inline]]
-    FuncPtr GetKernel32Func(LPCSTR param) const noexcept {
-        return reinterpret_cast<FuncPtr>(GetSymbolAddress(kernel32dll, param));
+    FuncPtr find_kernel32_func(LPCSTR param) const noexcept {
+        return reinterpret_cast<FuncPtr>(get_symbol_address(kernel32dll, param));
     }
     template <typename FuncPtr> [[nodiscard,gnu::always_inline]]
-    FuncPtr GetNtdllFunc(LPCSTR param) const noexcept {
-        return reinterpret_cast<FuncPtr>(GetSymbolAddress(ntdll, param));
+    FuncPtr find_ntdll_func(LPCSTR param) const noexcept {
+        return reinterpret_cast<FuncPtr>(get_symbol_address(ntdll, param));
     }
     template <typename FuncPtr> [[nodiscard,gnu::always_inline]]
-    FuncPtr GetMsvcrtFunc(LPCSTR param) const noexcept {
-        return reinterpret_cast<FuncPtr>(GetSymbolAddress(msvcrtdll, param));
+    FuncPtr find_msvcrt_func(LPCSTR param) const noexcept {
+        return reinterpret_cast<FuncPtr>(get_symbol_address(msvcrtdll, param));
     }
     template <typename FuncPtr> [[nodiscard,gnu::always_inline]]
-    FuncPtr GetUser32Func(LPCSTR param) const noexcept {
-        return reinterpret_cast<FuncPtr>(GetSymbolAddress(user32dll, param));
+    FuncPtr find_user32_func(LPCSTR param) const noexcept {
+        return reinterpret_cast<FuncPtr>(get_symbol_address(user32dll, param));
     }
     template <typename FuncPtr> [[nodiscard,gnu::always_inline]]
-    FuncPtr GetWs2_32Func(LPCSTR param) const noexcept {
-        return reinterpret_cast<FuncPtr>(GetSymbolAddress(ws2_32dll, param));
+    FuncPtr find_ws2_32_func(LPCSTR param) const noexcept {
+        return reinterpret_cast<FuncPtr>(get_symbol_address(ws2_32dll, param));
     }
 public: // Return object copies
     [[nodiscard,gnu::always_inline]]
-    Shellshock& SetLoadLibraryA() noexcept {
+    shellshock& set_loadlibrary_a() noexcept {
         if (!f_LoadLibraryA) {
-            char szLoadLibraryA[] = SS(LoadLibraryA);
-            f_LoadLibraryA = reinterpret_cast<LoadLibraryA_t>(GetSymbolAddress(kernel32dll, szLoadLibraryA));
+            char szLoadLibraryA[] = SZ(LoadLibraryA);
+            f_LoadLibraryA = reinterpret_cast<LoadLibraryA_t>(get_symbol_address(kernel32dll, szLoadLibraryA));
         }
 
         return *this;
     }
     [[nodiscard,gnu::always_inline]]
-    Shellshock& SetUser32() noexcept {
+    shellshock& load_ntdll() noexcept {
         if (f_LoadLibraryA) {
-            char szUser32[] = SS(user32.dll);
+            char szNtdll[] = SZ(ntdll.dll);
+            msvcrtdll = f_LoadLibraryA(szNtdll);
+        }
+
+        return *this;
+    }
+    [[nodiscard,gnu::always_inline]]
+    shellshock& load_msvcrt() noexcept {
+        if (f_LoadLibraryA) {
+            char szMsvcrt[] = SZ(msvcrt.dll);
+            msvcrtdll = f_LoadLibraryA(szMsvcrt);
+        }
+
+        return *this;
+    }
+    [[nodiscard,gnu::always_inline]]
+    shellshock& load_user32() noexcept {
+        if (f_LoadLibraryA) {
+            char szUser32[] = SZ(user32.dll);
             user32dll = f_LoadLibraryA(szUser32);
+        }
+
+        return *this;
+    }
+    [[nodiscard,gnu::always_inline]]
+    shellshock& load_ws2_32() noexcept {
+        if (f_LoadLibraryA) {
+            char szWs2_32[] = SZ(ws2_32.dll);
+            msvcrtdll = f_LoadLibraryA(szWs2_32);
         }
 
         return *this;
     }
 private:
     [[nodiscard,gnu::always_inline]]
-    UINT_PTR GetSymbolAddress(UINT_PTR hModule, LPCSTR lpProcName) const noexcept {
+    UINT_PTR get_symbol_address(UINT_PTR hModule, LPCSTR lpProcName) const noexcept {
         UINT_PTR dllAddress = hModule;
         UINT_PTR symbolAddress = 0;
         UINT_PTR exportedAddressTable = 0;
@@ -271,7 +304,7 @@ private:
         } else {
             DWORD dwCounter = exportDirectory->NumberOfNames;
             while (dwCounter--) {
-                char* cpExportedFunctionName = (char *)(dllAddress + DEREF_32( namePointerTable));
+                char* cpExportedFunctionName = (char *)(dllAddress + DEREF_32(namePointerTable));
                 if ( istreq(cpExportedFunctionName, const_cast<char *>(lpProcName)) ) {
                     exportedAddressTable += ( DEREF_16( ordinalTable ) * sizeof(DWORD) );
                     symbolAddress = (UINT_PTR)(dllAddress + DEREF_32( exportedAddressTable ));
@@ -320,5 +353,75 @@ private:
     UINT_PTR        ws2_32dll;
     LoadLibraryA_t  f_LoadLibraryA;
 };
+
+/////////////////////////
+
+class [[nodiscard]] payload_data {
+public:
+    payload_data(const payload_data&) = delete;
+    payload_data& operator=(const payload_data&) = delete;
+
+    payload_data(payload_data&& other) noexcept
+      : bytes_(other.bytes_)
+      , size_(other.size_)
+    {
+        other.bytes_ = nullptr;
+        other.size_ = 0;
+    }
+
+    payload_data& operator=(payload_data&& other) noexcept {
+        if (this != &other) {
+            delete[] bytes_;
+            bytes_   = other.bytes_;
+            size_    = other.size_;
+            other.bytes_ = nullptr;
+            other.size_ = 0;
+        }
+
+        return *this;
+    }
+
+    ~payload_data() {
+        delete[] bytes_;
+    }
+
+    template <typename FPTR_T, typename STUB_T>
+    static payload_data build_from_payload(FPTR_T payload, STUB_T stub) {
+        std::size_t size = reinterpret_cast<uintptr_t>(stub)
+            - reinterpret_cast<uintptr_t>(payload);
+        return payload_data(payload, size);
+    }
+
+    bool extract_to_file(std::filesystem::path outfile) const noexcept {
+        std::ofstream file(outfile, std::ios::binary);
+
+        if (!file.is_open()) {
+            return false;
+        }
+
+        file.write(reinterpret_cast<const char*>(bytes_), size_);
+        if (file.fail()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    const uint8_t* bytes() const noexcept { return bytes_; }
+    std::size_t size() const noexcept     { return size_;  }
+private:
+    uint8_t*    bytes_;
+    std::size_t size_;
+
+    template <typename FPTR_T>
+    payload_data(FPTR_T payload, std::size_t size)
+      : bytes_( new uint8_t[size] )
+      , size_(size)
+    {
+        std::memcpy(bytes_, reinterpret_cast<void *>(payload), size_);
+    }
+};
+
+} // namepsace ss
 
 #endif // SHELL_SHOCK_HEADER
