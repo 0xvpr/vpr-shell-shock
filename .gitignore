@@ -12,6 +12,7 @@
 
 # Exclude directories
 .vs
+.vscode
 bin
 out
 venv
