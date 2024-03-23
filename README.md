@@ -13,10 +13,9 @@
 </p>
 
 ### How to use
-One way to use the Shellshock.hpp header is to:
+One way to use the shellshock.h header is to:
 - Create a 'Shellshock' object
-- Load in whatever libraries you intend to use via the member functions
-- Resolve functions that you intend to use with said libraries
+- Resolve functions that you intend to use with the 'load_' member functions
 - Utilize a singular function and make sure that all variables are created  
   on the stack
 
@@ -26,22 +25,23 @@ be position independent.
 
 ### Quick Example
 ```cpp
-#include "Shellshock/Shellshock.hpp"
+#include "shellshock/shellshock.h"
 
 typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);
 
-extern "C" auto payload() noexcept -> void {
-    // Initialize object with required libraries
-    auto ss = ss::shellshock().set_loadlibrary_a().load_user32();
+extern "C" int payload_cpp(void) {
+    auto ss = ss::shellshock();
 
-    // Load function into a temporary variable.
-    char szMessageBoxA[] = SZ(MessageBoxA);
+    // Load target function into a temporary variable.
+    char szMessageBoxA[] = "MessageBoxA";
     auto fMessageBoxA = ss.find_user32_func<MessageBoxA_t>(szMessageBoxA);
     
     // Perform function call
-    char szTitle[] = SZ(Shellshock);
-    char szMessage[] = SZ(Success.);
-    fMessageBoxA && fMessageBoxA(NULL, szMessage, szTitle, 0);
+    char szTitle[] = "Shellshock";
+    char szMessage[] = "Success.";
+    fMessageBoxA && fMessageBoxA(nullptr, szMessage, szTitle, 0);
+
+    return 0;
 }
 ```
 
@@ -56,7 +56,7 @@ void stub() {
 
 int main() {
     auto pd = ss::payload_data::build_from_payload(payload, stub);
-    pd.extract_to_file("out.bin");
+    pd.extract_to_file("shellcode.bin");
 }
 ```
 
