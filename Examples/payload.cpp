@@ -3,42 +3,75 @@
  * Created:         January 2nd, 2023
  *
  * Updated by:      VPR
- * Updated:         March 4th, 2024
+ * Updated:         March 23rd, 2024
  *
- * Description:     A sample of a function that uses the Shellshock library
+ * Description:     A sample of functions that use the Shellshock library
  *                  in order to produce position independent code.
 **/
 
-#ifdef   __WIN64
-#define  OUTFILE    "out64.bin"
-#else
-#define  OUTFILE    "out32.bin"
-#endif //__WIN64
+#if       defined(__WIN64)
+#define  SUFFIX    "_out64.bin"
+#else  // !defined(__WIN64)
+#define  SUFFIX    "_out32.bin"
+#endif // !defined(__WIN64)
 
-#include "../Shellshock/Shellshock.hpp"
+#include "../shellshock/shellshock.h"
 
+typedef UINT_PTR (WINAPI * LoadLibraryA_t)(LPCSTR);
 typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);
 
-extern "C" auto payload() noexcept -> void {
-    // Initialize object with required libraries
-    auto ss = ss::shellshock().set_loadlibrary_a().load_user32();
+////////////////////////////////////////////////////////////////////////////////
+//                          C++ API usage example
+////////////////////////////////////////////////////////////////////////////////
 
-    // Load function into a temporary variable.
-    char szMessageBoxA[] = SZ(MessageBoxA);
+extern "C" int payload_cpp(void) {
+    auto ss = ss::shellshock();
+
+    // Load target function into a temporary variable.
+    char szMessageBoxA[] = "MessageBoxA";
     auto fMessageBoxA = ss.find_user32_func<MessageBoxA_t>(szMessageBoxA);
     
     // Perform function call
-    char szTitle[] = SZ(Shellshock);
-    char szMessage[] = SZ(Success.);
-    fMessageBoxA && fMessageBoxA(NULL, szMessage, szTitle, 0);
+    char szTitle[] = "Shellshock";
+    char szMessage[] = "Success.";
+    fMessageBoxA && fMessageBoxA(nullptr, szMessage, szTitle, 0);
+
+    return 0;
 }
 
-[[gnu::noinline]]
-int stub() {
+int payload_stub_cpp() {
+    return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//                           C API usage example
+////////////////////////////////////////////////////////////////////////////////
+
+extern "C" int payload_c(void) {
+    char loadlibrarya_str[] = "LoadLibraryA";
+    LoadLibraryA_t fLoadLibraryA = (LoadLibraryA_t)get_symbol_address(get_kernel_32(), loadlibrarya_str);
+
+    char user32_str[] = "user32.dll";
+    UINT_PTR user32 = (UINT_PTR)fLoadLibraryA(user32_str);
+
+    char MessageBoxA_str[] = "MessageBoxA";
+    MessageBoxA_t fMessageBoxA = (MessageBoxA_t)(get_symbol_address(user32, MessageBoxA_str));
+
+    char szTitle[] = "Shellshock";
+    char szMessage[] = "Success.";
+    fMessageBoxA && fMessageBoxA(NULL, szMessage, szTitle, 0);
+
+    return 0;
+}
+
+int payload_stub_c() {
     return 0;
 }
 
 int main() {
-    auto pd = ss::payload_data::build_from_payload(payload, stub);
-    pd.extract_to_file(OUTFILE);
+    auto pd_cpp = ss::payload_data::build_from_payload(payload_cpp, payload_stub_cpp);
+    pd_cpp.extract_to_file("cpp" SUFFIX);
+
+    auto pd_c = ss::payload_data::build_from_payload(payload_c, payload_stub_c);
+    pd_c.extract_to_file("c" SUFFIX);
 }

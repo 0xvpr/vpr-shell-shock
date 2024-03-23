@@ -21,12 +21,14 @@ SRC       = src
 BIN       = bin
 BUILD     = build
 
-all: target
+all: target loader
 
 target: payload32.exe payload64.exe 
-loader: loader32.obj loader64.obj
-	$(LD32) $(LDFLAGS) loader32.obj -o loader32.exe
-	$(LD64) $(LDFLAGS) loader64.obj -o loader64.exe
+loader: c_loader32.obj cpp_loader32.obj c_loader64.obj cpp_loader64.obj
+	$(LD32) $(LDFLAGS) c_loader32.obj -o c_loader32.exe
+	$(LD32) $(LDFLAGS) cpp_loader32.obj -o cpp_loader32.exe
+	$(LD64) $(LDFLAGS) c_loader64.obj -o c_loader64.exe
+	$(LD64) $(LDFLAGS) cpp_loader64.obj -o cpp_loader64.exe
 
 %32.obj: %32.asm
 	./$(TARGET)32.exe
