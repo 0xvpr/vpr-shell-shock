@@ -7,7 +7,6 @@ CXXFLAGS  = -Ofast -std=c++20 -static \
             -Wall -Wextra -Werror -Wshadow -Wconversion \
             -fPIC -fno-function-sections \
             -fno-exceptions -fno-rtti \
-		    -fno-ident -fvisibility=hidden \
             -I..
 
 LD32      = i686-w64-mingw32-ld

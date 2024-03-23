@@ -45,11 +45,12 @@ extern "C" int payload_cpp(void) {
 }
 ```
 
-if you want the payload to be immediately exported to a file,  
+If you want the payload to be immediately exported to a file,  
 you can do the following:
 ```cpp
+// Payload that will be exported to shellcode
 extern "C" auto payload() noexcept -> void { (...) }
-// immediately after the function ends
+// Immediately after the function ends
 void stub() {
     return;
 }
