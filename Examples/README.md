@@ -1,4 +1,5 @@
 # Example Usages
+The header can be used with C++17 and above, and C89 and above
 
 ## C++ API
 ```cpp
