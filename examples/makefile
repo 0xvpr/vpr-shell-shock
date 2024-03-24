@@ -11,6 +11,7 @@ CXXFLAGS  = -Ofast -std=c++20 -static \
 
 LD32      = i686-w64-mingw32-ld
 LD64      = x86_64-w64-mingw32-ld
+LDFLAGS   = --entry=entry
 
 ASM       = nasm
 ASM32     = $(ASM) -f win32
