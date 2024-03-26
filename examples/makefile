@@ -22,27 +22,35 @@ BIN       = bin
 BUILD     = build
 
 all: target loader
+target: bin build
+loader: bin build
 
-target: payload32.exe payload64.exe 
-loader: c_loader32.obj cpp_loader32.obj c_loader64.obj cpp_loader64.obj
-	$(LD32) $(LDFLAGS) c_loader32.obj -o c_loader32.exe
-	$(LD32) $(LDFLAGS) cpp_loader32.obj -o cpp_loader32.exe
-	$(LD64) $(LDFLAGS) c_loader64.obj -o c_loader64.exe
-	$(LD64) $(LDFLAGS) cpp_loader64.obj -o cpp_loader64.exe
+target: $(addprefix bin/,payload32.exe payload64.exe)
+loader: $(addprefix build/,c_loader32.obj cpp_loader32.obj c_loader64.obj cpp_loader64.obj)
+	$(LD32) $(LDFLAGS) build/c_loader32.obj -o   bin/c_loader32.exe
+	$(LD32) $(LDFLAGS) build/cpp_loader32.obj -o bin/cpp_loader32.exe
+	$(LD64) $(LDFLAGS) build/c_loader64.obj -o   bin/c_loader64.exe
+	$(LD64) $(LDFLAGS) build/cpp_loader64.obj -o bin/cpp_loader64.exe
 
-%32.obj: %32.asm
-	./$(TARGET)32.exe
+build/%32.obj: %32.asm
+	bin/$(TARGET)32.exe
 	$(ASM32) $^ -o $@
 
-%64.obj: %64.asm
-	./$(TARGET)64.exe
+build/%64.obj: %64.asm
+	bin/$(TARGET)64.exe
 	$(ASM64) $^ -o $@
 
-%32.exe : %.cpp
+bin/%32.exe : %.cpp
 	$(CXX32) $(CXXFLAGS) $^ -o $@
 
-%64.exe : %.cpp
+bin/%64.exe : %.cpp
 	$(CXX64) $(CXXFLAGS) $^ -o $@
+
+bin:
+	mkdir -p bin
+
+build:
+	mkdir -p build
 
 .PHONY : clean
 clean:
