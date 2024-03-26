@@ -3,7 +3,7 @@
  * Created:         December 29th, 2022
  *
  * Updated by:      VPR
- * Updated:         March 23rd, 2024
+ * Updated:         March 25th, 2024
  *
  * Description:     C/C++ Header only library for position independent shell-code generation.
  *
@@ -19,6 +19,7 @@
 #ifndef    VC_EXTRA_LEAN
 #define    VC_EXTRA_LEAN
 #endif  // VC_EXTRA_LEAN
+#include   <winternl.h>
 #include   <windows.h>
 #include   <winnt.h>
 #include   <intrin.h>
@@ -62,110 +63,6 @@ constexpr DWORD KERNEL32DLL_HASH = 0x6A4ABC5B;
 #define    KERNEL32DLL_HASH 0x6A4ABC5B
 #endif // !defined(__cplusplus)
 
-typedef struct _UNICODE_STR {
-    USHORT                  Length;
-    USHORT                  MaximumLength;
-    PWSTR                   pBuffer;
-} UNICODE_STR, *PUNICODE_STR;
-
-typedef struct _PEB_LDR_DATA {
-    DWORD                   dwLength;
-    DWORD                   dwInitialized;
-    LPVOID                  lpSsHandle;
-    LIST_ENTRY              InLoadOrderModuleList;
-    LIST_ENTRY              InMemoryOrderModuleList;
-    LIST_ENTRY              InInitializationOrderModuleList;
-    LPVOID                  lpEntryInProgress;
-} PEB_LDR_DATA, *PPEB_LDR_DATA;
-
-typedef struct _LDR_DATA_TABLE_ENTRY {
-    LIST_ENTRY              InMemoryOrderModuleList;
-    LIST_ENTRY              InInitializationOrderModuleList;
-    PVOID                   DllBase;
-    PVOID                   EntryPoint;
-    ULONG                   SizeOfImage;
-    UNICODE_STR             FullDllName;
-    UNICODE_STR             BaseDllName;
-    ULONG                   Flags;
-    SHORT                   LoadCount;
-    SHORT                   TlsIndex;
-    LIST_ENTRY              HashTableEntry;
-    ULONG                   TimeDateStamp;
-} LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;
-
-typedef struct _PEB_FREE_BLOCK {
-   struct _PEB_FREE_BLOCK * pNext;
-   DWORD                    dwSize;
-} PEB_FREE_BLOCK, *PPEB_FREE_BLOCK;
-
-typedef struct __PEB {
-   BYTE                     bInheritedAddressSpace;
-   BYTE                     bReadImageFileExecOptions;
-   BYTE                     bBeingDebugged;
-   BYTE                     bSpareBool;
-   LPVOID                   lpMutant;
-   LPVOID                   lpImageBaseAddress;
-   PPEB_LDR_DATA            pLdr;
-   LPVOID                   lpProcessParameters;
-   LPVOID                   lpSubSystemData;
-   LPVOID                   lpProcessHeap;
-   PRTL_CRITICAL_SECTION    pFastPebLock;
-   LPVOID                   lpFastPebLockRoutine;
-   LPVOID                   lpFastPebUnlockRoutine;
-   DWORD                    dwEnvironmentUpdateCount;
-   LPVOID                   lpKernelCallbackTable;
-   DWORD                    dwSystemReserved;
-   DWORD                    dwAtlThunkSListPtr32;
-   PPEB_FREE_BLOCK          pFreeList;
-   DWORD                    dwTlsExpansionCounter;
-   LPVOID                   lpTlsBitmap;
-   DWORD                    dwTlsBitmapBits[2];
-   LPVOID                   lpReadOnlySharedMemoryBase;
-   LPVOID                   lpReadOnlySharedMemoryHeap;
-   LPVOID                   lpReadOnlyStaticServerData;
-   LPVOID                   lpAnsiCodePageData;
-   LPVOID                   lpOemCodePageData;
-   LPVOID                   lpUnicodeCaseTableData;
-   DWORD                    dwNumberOfProcessors;
-   DWORD                    dwNtGlobalFlag;
-   LARGE_INTEGER            liCriticalSectionTimeout;
-   DWORD                    dwHeapSegmentReserve;
-   DWORD                    dwHeapSegmentCommit;
-   DWORD                    dwHeapDeCommitTotalFreeThreshold;
-   DWORD                    dwHeapDeCommitFreeBlockThreshold;
-   DWORD                    dwNumberOfHeaps;
-   DWORD                    dwMaximumNumberOfHeaps;
-   LPVOID                   lpProcessHeaps;
-   LPVOID                   lpGdiSharedHandleTable;
-   LPVOID                   lpProcessStarterHelper;
-   DWORD                    dwGdiDCAttributeList;
-   LPVOID                   lpLoaderLock;
-   DWORD                    dwOSMajorVersion;
-   DWORD                    dwOSMinorVersion;
-   WORD                     wOSBuildNumber;
-   WORD                     wOSCSDVersion;
-   DWORD                    dwOSPlatformId;
-   DWORD                    dwImageSubsystem;
-   DWORD                    dwImageSubsystemMajorVersion;
-   DWORD                    dwImageSubsystemMinorVersion;
-   DWORD                    dwImageProcessAffinityMask;
-   DWORD                    dwGdiHandleBuffer[34];
-   LPVOID                   lpPostProcessInitRoutine;
-   LPVOID                   lpTlsExpansionBitmap;
-   DWORD                    dwTlsExpansionBitmapBits[32];
-   DWORD                    dwSessionId;
-   ULARGE_INTEGER           liAppCompatFlags;
-   ULARGE_INTEGER           liAppCompatFlagsUser;
-   LPVOID                   lppShimData;
-   LPVOID                   lpAppCompatInfo;
-   UNICODE_STR              usCSDVersion;
-   LPVOID                   lpActivationContextData;
-   LPVOID                   lpProcessAssemblyStorageMap;
-   LPVOID                   lpSystemDefaultActivationContextData;
-   LPVOID                   lpSystemAssemblyStorageMap;
-   DWORD                    dwMinimumStackCommit;
-} _PEB, * _PPEB;
-
 ////////////////////////////////////////////////////////////////////////////////
 //                                   C API
 ////////////////////////////////////////////////////////////////////////////////
@@ -173,27 +70,16 @@ typedef struct __PEB {
 /** 
  * Rotate bits right by 13.
 **/
-__forceinline DWORD ror13(DWORD d) {
+__forceinline
+DWORD ror13(DWORD d) {
     return (d >> 13) | (d << (19));
 }
 
 /** 
- * Calculates hash of byte string.
+ * Case-insensitive string compare.
 **/
-__forceinline DWORD hash(const BYTE* c) {
-    DWORD h = 0;
-    do {
-        h = ror13( h );
-        h += *c;
-    } while ( *++c );
-
-    return h;
-}
-
-/** 
- * Case-insesitive string compare.
-**/
-__forceinline bool istreq(char* _a, char* _b) {
+__forceinline
+bool istreq(char* _a, char* _b) {
     for (char *a = _a, *b = _b; *a; ++a, ++b) {
         if ((*a | 0x20) != (*b | 0x20) ) {
             return false;
@@ -206,42 +92,39 @@ __forceinline bool istreq(char* _a, char* _b) {
 /** 
  * Function to fetch the base address of kernel32.dll from the Process Environment Block.
 **/
-__forceinline UINT_PTR get_kernel_32(void) {
-    USHORT usCounter = 0;
+__forceinline
+UINT_PTR get_kernel_32(void) {
 
 #if       defined(__WIN64)
-    auto kernel32dll = __readgsqword( 0x60 ); // TEB is at gs:[0x60] in 64 bit
+    PPEB peb = (PPEB)__readgsqword(0x60); // PEB is at gs:[0x60] in 64 bit
 #else  // !defined(__WIN64)
-    auto kernel32dll = __readfsdword( 0x30 ); // TEB is at fs:[0x30] in 32 bit
+    PPEB peb = (PPEB)__readfsdword(0x30); // PEB is at fs:[0x30] in 32 bit
 #endif // !defined(__WIN64)
 
-    kernel32dll = (ULONG_PTR)((_PPEB)kernel32dll)->pLdr;
-    ULONG_PTR val1 = (ULONG_PTR)((PPEB_LDR_DATA)kernel32dll)->InMemoryOrderModuleList.Flink;
-    while ( val1 ) {
-        ULONG_PTR val2 = (ULONG_PTR)((PLDR_DATA_TABLE_ENTRY)val1)->BaseDllName.pBuffer;
-        ULONG_PTR val3 = 0;
+    PPEB_LDR_DATA ldr = peb->Ldr;
+    for ( LIST_ENTRY* entry = ldr->InMemoryOrderModuleList.Flink->Flink;
+          entry->Flink != (LIST_ENTRY *)ldr->InMemoryOrderModuleList.Flink;
+          entry = entry->Flink)
+    {
+        UNICODE_STRING dll_name_us = ((LDR_DATA_TABLE_ENTRY *)entry)->FullDllName;
+        PBYTE char_buffer = (PBYTE)dll_name_us.Buffer;
 
-        //calculate the hash of kernel32.dll
-        usCounter = ((PLDR_DATA_TABLE_ENTRY)val1)->BaseDllName.Length;
-        do {
-            val3 = ror13( (DWORD)val3 );
-            val3 += (*(BYTE *)val2) - ((*(BYTE *)val2) >= 'a') * 0x20;
-            val2++;
-        } while (--usCounter);
-
-        // compare the hash kernel32.dll
-        if ((DWORD)val3 == KERNEL32DLL_HASH) {
-            //return kernel32.dll if found
-            return (ULONG_PTR)((PLDR_DATA_TABLE_ENTRY)val1)->DllBase;
+        DWORD hash = 0;
+        for (USHORT i = dll_name_us.Length; i; --i, ++char_buffer) {
+            hash = _rotr( hash, 13 ) +
+                   (DWORD)((*char_buffer) - (((*char_buffer) >= 'a') * 0x20));
         }
 
-        val1 = DEREF( val1 );
+        if (hash == KERNEL32DLL_HASH) {
+            return (ULONG_PTR)((PLDR_DATA_TABLE_ENTRY)entry)->Reserved2[0];
+        }
     }
 
     return 0;
 }
 
-__forceinline UINT_PTR get_symbol_address( UINT_PTR hModule,
+__forceinline
+UINT_PTR get_symbol_address( UINT_PTR hModule,
                              LPCSTR lpProcName )
 {
     UINT_PTR dllAddress             = hModule;
