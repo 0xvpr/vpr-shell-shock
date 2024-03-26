@@ -111,12 +111,11 @@ UINT_PTR get_kernel_32(void) {
 
         DWORD hash = 0;
         for (USHORT i = dll_name_us.Length; i; --i, ++char_buffer) {
-            hash = _rotr( hash, 13 ) +
-                   (DWORD)((*char_buffer) - (((*char_buffer) >= 'a') * 0x20));
+            hash = ror13(hash) + (DWORD)((*char_buffer)); 
         }
 
         if (hash == KERNEL32DLL_HASH) {
-            return (ULONG_PTR)((PLDR_DATA_TABLE_ENTRY)entry)->Reserved2[0];
+            return (ULONG_PTR)(((PLDR_DATA_TABLE_ENTRY)entry)->Reserved2[0]);
         }
     }
 
