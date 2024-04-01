@@ -3,7 +3,7 @@
  * Created:         January 2nd, 2023
  *
  * Updated by:      VPR
- * Updated:         March 23rd, 2024
+ * Updated:         April 1st, 2024
  *
  * Description:     A sample of functions that use the Shellshock library
  *                  in order to produce position independent code.
@@ -15,7 +15,7 @@
 #define  SUFFIX    "_out32.bin"
 #endif // !defined(__WIN64)
 
-#include "../shellshock/shellshock.h"
+#include "../vpr/shellshock.h"
 
 typedef UINT_PTR (WINAPI * LoadLibraryA_t)(LPCSTR);
 typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);
@@ -25,7 +25,7 @@ typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);
 ////////////////////////////////////////////////////////////////////////////////
 
 extern "C" int payload_cpp(void) {
-    auto ss = ss::shellshock();
+    auto ss = vpr::ss::shellshock();
 
     // Load target function into a temporary variable.
     char szMessageBoxA[] = "MessageBoxA";
@@ -69,9 +69,11 @@ int payload_stub_c() {
 }
 
 int main() {
-    auto pd_cpp = ss::payload_data::build_from_payload(payload_cpp, payload_stub_cpp);
+    using namespace vpr::ss; // payload_data
+
+    auto pd_cpp = payload_data::build_from_payload(payload_cpp, payload_stub_cpp);
     pd_cpp.extract_to_file("cpp" SUFFIX);
 
-    auto pd_c = ss::payload_data::build_from_payload(payload_c, payload_stub_c);
+    auto pd_c = payload_data::build_from_payload(payload_c, payload_stub_c);
     pd_c.extract_to_file("c" SUFFIX);
 }

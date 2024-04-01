@@ -3,7 +3,7 @@ TARGET    = payload
 CXX32     = i686-w64-mingw32-g++
 CXX64     = x86_64-w64-mingw32-g++
 
-CXXFLAGS  = -Ofast -std=c++20 -static \
+CXXFLAGS  = -Ofast -std=c++2a -static \
             -Wall -Wextra -Werror -Wshadow -Wconversion \
             -fPIC -fno-function-sections \
             -fno-exceptions -fno-rtti \

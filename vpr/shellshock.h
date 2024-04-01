@@ -13,8 +13,8 @@
  *                  Without reading that tutorial, this project would not have been started
 **/
 
-#ifndef    SHELL_SHOCK_HEADER
-#define    SHELL_SHOCK_HEADER
+#ifndef    VPR_SHELL_SHOCK_HEADER
+#define    VPR_SHELL_SHOCK_HEADER
 
 #ifndef    VC_EXTRA_LEAN
 #define    VC_EXTRA_LEAN
@@ -174,6 +174,7 @@ UINT_PTR get_symbol_address( UINT_PTR hModule,
 ////////////////////////////////////////////////////////////////////////////////
 
 #if defined(__cplusplus)
+namespace vpr {
 namespace ss {
 
 class [[nodiscard]] shellshock {
@@ -52905,7 +52906,7 @@ public:
     payload_data(const payload_data&) = delete;
     payload_data& operator=(const payload_data&) = delete;
     
-    payload_data(payload_data&& other) noexcept
+    explicit payload_data(payload_data&& other) noexcept
       : bytes_(std::move(other.bytes_))
       , size_(other.size_)
     {
@@ -52960,7 +52961,8 @@ private:
     }
 };
 } // namepsace ss
+} // namespace vpr
 
 #endif // defined(__cplusplus)
 
-#endif // SHELL_SHOCK_HEADER
+#endif // VPR_SHELL_SHOCK_HEADER
