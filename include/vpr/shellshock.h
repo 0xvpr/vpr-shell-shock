@@ -52965,8 +52965,10 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-//                         Payload Extraction Helper
+//                      Payload Extraction Helper (GNU ONLY)
 ////////////////////////////////////////////////////////////////////////////////
+
+#if defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__)
 
 class [[nodiscard]] payload_data {
     typedef std::unique_ptr<const uint8_t[]> byte_ptr;
@@ -52974,9 +52976,15 @@ public:
     payload_data(const payload_data&) = delete;
     payload_data& operator=(const payload_data&) = delete;
     
+    explicit payload_data() noexcept
+    : failed_( true )
+    {
+    }
+
     explicit payload_data(payload_data&& other) noexcept
-      : bytes_(std::move(other.bytes_))
-      , size_(other.size_)
+    : bytes_(std::move(other.bytes_))
+    , size_(other.size_)
+    , failed_( false )
     {
         other.size_ = 0;
     }
@@ -52994,12 +53002,24 @@ public:
 
     template <typename FPTR_T, typename STUB_T>
     static payload_data build_from_payload(FPTR_T payload, STUB_T stub) {
-        std::size_t size = reinterpret_cast<uintptr_t>(stub)
-            - reinterpret_cast<uintptr_t>(payload);
+        if ( +stub <= +payload )
+        {
+            return payload_data();
+        }
+
+        std::size_t size =
+            reinterpret_cast<uintptr_t>(stub) - reinterpret_cast<uintptr_t>(payload);
+
+        // Deal with MSVC padding
+
         return payload_data(payload, size);
     }
 
     bool extract_to_file(std::filesystem::path outfile) const noexcept {
+        if ( failed_ ) {
+            return false;
+        }
+
         std::ofstream file(outfile, std::ios::binary);
 
         if (!file.is_open()) {
@@ -53019,15 +53039,18 @@ public:
 private:
     byte_ptr    bytes_;
     std::size_t size_;
+    const bool failed_;
 
     template <typename FPTR_T>
     payload_data(FPTR_T payload, std::size_t size)
-      : bytes_( new uint8_t[size] )
-      , size_(size)
+    : bytes_( new uint8_t[size] )
+    , size_( size )
+    , failed_( false )
     {
         std::memcpy(const_cast<uint8_t *>(bytes_.get()), reinterpret_cast<void *>(payload), size_);
     }
 };
+#endif // defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__)
 
 } // namepsace ss
 } // namespace vpr
