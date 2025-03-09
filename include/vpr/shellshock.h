@@ -63,6 +63,74 @@ constexpr DWORD KERNEL32DLL_HASH = 0x6A4ABC5B;
 #define    KERNEL32DLL_HASH 0x6A4ABC5B
 #endif // !defined(__cplusplus)
 
+#if defined(_MSC_VER) && (!defined(__clang__) || !defined(__GNUC__) || !defined(__MINGW32__) || !defined(__MINGW64__) )
+
+#ifndef __UNICODE_STRING_DEFINED
+#define __UNICODE_STRING_DEFINED
+  typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR Buffer;
+  } UNICODE_STRING;
+#endif
+
+typedef struct _PEB_LDR_DATA {
+  BYTE Reserved1[8];
+  PVOID Reserved2[3];
+  LIST_ENTRY InMemoryOrderModuleList;
+} PEB_LDR_DATA,*PPEB_LDR_DATA;
+
+typedef struct _LDR_DATA_TABLE_ENTRY {
+  PVOID Reserved1[2];
+  LIST_ENTRY InMemoryOrderLinks;
+  PVOID Reserved2[2];
+  PVOID DllBase;
+  PVOID Reserved3[2];
+  UNICODE_STRING FullDllName;
+  BYTE Reserved4[8];
+  PVOID Reserved5[3];
+  union {
+    ULONG CheckSum;
+    PVOID Reserved6;
+  };
+  ULONG TimeDateStamp;
+} LDR_DATA_TABLE_ENTRY,*PLDR_DATA_TABLE_ENTRY;
+
+typedef struct _RTL_USER_PROCESS_PARAMETERS {
+  BYTE Reserved1[16];
+  PVOID Reserved2[10];
+  UNICODE_STRING ImagePathName;
+  UNICODE_STRING CommandLine;
+} RTL_USER_PROCESS_PARAMETERS,*PRTL_USER_PROCESS_PARAMETERS;
+
+/* This function pointer is undocumented and just valid for windows 2000.
+   Therefore I guess.  */
+typedef VOID (NTAPI *PPS_POST_PROCESS_INIT_ROUTINE)(VOID);
+
+//redefine PEB struct
+typedef struct _PEB {
+    BYTE Reserved1[2];
+    BYTE BeingDebugged;
+    BYTE Reserved2[1];
+    PVOID Reserved3[2];
+    PPEB_LDR_DATA Ldr;
+    PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
+    PVOID Reserved4[3];
+    PVOID AtlThunkSListPtr;
+    PVOID Reserved5;
+    ULONG Reserved6;
+    PVOID Reserved7;
+    ULONG Reserved8;
+    ULONG AtlThunkSListPtr32;
+    PVOID Reserved9[45];
+    BYTE Reserved10[96];
+    PPS_POST_PROCESS_INIT_ROUTINE PostProcessInitRoutine;
+    BYTE Reserved11[128];
+    PVOID Reserved12[1];
+    ULONG SessionId;
+  } PEB,*PPEB;
+#endif // MSVC && not clang, gnu, or mingw
+
 ////////////////////////////////////////////////////////////////////////////////
 //                                   C API
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,11 +163,11 @@ bool istreq(char* const _a, char* const _b) {
 __forceinline
 UINT_PTR get_kernel_32(void) {
 
-#if       defined(__WIN64)
+#if       defined(__WIN64) || defined(_M_X64) || defined(__amd64__)
     PPEB peb = (PPEB)__readgsqword(0x60); // PEB is at gs:[0x60] in 64 bit
-#else  // !defined(__WIN64)
+#else  // !defined(__WIN64) || !defined(_M_X64) || !defined(__amd64__)
     PPEB peb = (PPEB)__readfsdword(0x30); // PEB is at fs:[0x30] in 32 bit
-#endif // !defined(__WIN64)
+#endif // defined(__WIN64) || !defined(_M_X64) || !defined(__amd64__)
 
     PPEB_LDR_DATA ldr = peb->Ldr;
     for ( LIST_ENTRY* entry = ldr->InMemoryOrderModuleList.Flink->Flink;
@@ -52965,5 +53033,5 @@ private:
 } // namespace vpr
 
 #endif // defined(__cplusplus)
-
 #endif // VPR_SHELL_SHOCK_HEADER
+

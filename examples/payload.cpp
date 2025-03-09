@@ -9,11 +9,11 @@
  *                  in order to produce position independent code.
 **/
 
-#if       defined(__WIN64)
+#if       defined(__WIN64) || defined(_M_X64) || defined(__amd64__)
 #define  SUFFIX    "_out64.bin"
-#else  // !defined(__WIN64)
+#else  // !defined(__WIN64) || defined(_M_X64) || defined(__amd64__)
 #define  SUFFIX    "_out32.bin"
-#endif // !defined(__WIN64)
+#endif // defined(__WIN64) || defined(_M_X64) || defined(__amd64__)
 
 #include "vpr/shellshock.h"
 
