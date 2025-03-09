@@ -51,7 +51,7 @@ target_link_libraries(myapp PRIVATE vpr-shell-shock::shell-shock)
 
 ### Quick Example
 ```cpp
-#include "vpr/shellshock.hpp"
+#include "include/vpr/shellshock.h"
 
 typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);
 
