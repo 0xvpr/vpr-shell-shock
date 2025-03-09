@@ -3,7 +3,7 @@
  * Created:         January 2nd, 2023
  *
  * Updated by:      VPR
- * Updated:         April 1st, 2024
+ * Updated:         March 9th, 2025
  *
  * Description:     A sample of functions that use the Shellshock library
  *                  in order to produce position independent code.
@@ -15,7 +15,7 @@
 #define  SUFFIX    "_out32.bin"
 #endif // !defined(__WIN64)
 
-#include "../vpr/shellshock.h"
+#include "vpr/shellshock.h"
 
 typedef UINT_PTR (WINAPI * LoadLibraryA_t)(LPCSTR);
 typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);

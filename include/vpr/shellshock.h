@@ -3,7 +3,7 @@
  * Created:         December 29th, 2022
  *
  * Updated by:      VPR
- * Updated:         March 25th, 2024
+ * Updated:         March 9th, 2025
  *
  * Description:     C/C++ Header only library for position independent shell-code generation.
  *
@@ -79,7 +79,7 @@ DWORD ror13(DWORD d) {
  * Case-insensitive string compare.
 **/
 __forceinline
-bool istreq(char* _a, char* _b) {
+bool istreq(char* const _a, char* const _b) {
     for (char *a = _a, *b = _b; *a; ++a, ++b) {
         if ((*a | 0x20) != (*b | 0x20) ) {
             return false;
@@ -52960,6 +52960,7 @@ private:
         std::memcpy(const_cast<uint8_t *>(bytes_.get()), reinterpret_cast<void *>(payload), size_);
     }
 };
+
 } // namepsace ss
 } // namespace vpr
 

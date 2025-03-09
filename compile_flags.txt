@@ -5,7 +5,7 @@
 -isystem/usr/lib/gcc/x86_64-w64-mingw32/10-posix/include/c++/x86_64-w64-mingw32/
 -I.
 -I..
--IShellshock
+-Iinclude
 -Wall
 -Wextra
 -Werror

@@ -7,7 +7,7 @@ CXXFLAGS  = -Ofast -std=c++2a -static \
             -Wall -Wextra -Werror -Wshadow -Wconversion \
             -fPIC -fno-function-sections \
             -fno-exceptions -fno-rtti \
-            -I..
+            -I.. -I../include
 
 LD32      = i686-w64-mingw32-ld
 LD64      = x86_64-w64-mingw32-ld

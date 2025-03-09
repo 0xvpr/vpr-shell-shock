@@ -25,3 +25,6 @@ build
 
 # Exclude Image Files
 *.psd
+
+# misc
+compile_flags.txt

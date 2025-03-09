@@ -1,4 +1,4 @@
-<h1 align="center">Shellshock</h1>
+<h1 align="center">shell-shock</h1>
 <p align="center">
   <img src="https://img.shields.io/badge/Windows--x86__64-supported-green">
   <img src="https://img.shields.io/badge/Windows--x86-supported-green">
@@ -23,9 +23,35 @@ Once something like this is achieved, you can compile the binary to an object
 file and dump the `.text` section out to a whatever you like. That dump **should**  
 be position independent.
 
+### Integration Using CMake (MinGW)
+```bash
+git clone https://github.com/0xvpr/vpr-shell-shock.git
+cd vpr-shell-shock
+mkdir build && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=</your/desired/path/>
+make install
+```
+
+OR
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(
+  vpr-shell-shock
+  GIT_REPOSITORY https://github.com/0xvpr/vpr-shell-shock.git
+  GIT_TAG main  # Or use a specific version tag like "v1.0.0"
+)
+
+FetchContent_MakeAvailable(vpr-shell-shock)
+
+add_executable(myapp main.cpp)
+target_link_libraries(myapp PRIVATE vpr-shell-shock::shell-shock)
+```
+
 ### Quick Example
 ```cpp
-#include "shellshock/shellshock.h"
+#include "vpr/shellshock.hpp"
 
 typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);
 
