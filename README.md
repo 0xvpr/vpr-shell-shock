@@ -4,6 +4,9 @@
   <img src="https://img.shields.io/badge/Windows--x86-supported-green">
   <img src="https://img.shields.io/badge/Linux--x86__64-unsupported-red">
   <img src="https://img.shields.io/badge/Linux--x86-unsupported-red">
+  <img src="https://img.shields.io/badge/MSVC-supported-green">
+  <img src="https://img.shields.io/badge/MinGW-supported-green">
+  <img src="https://img.shields.io/badge/clang-supported-green">
   <a href="https://mit-license.org/">
     <img src="https://img.shields.io/github/license/0xvpr/vpr-shell-shock?style=flat-square">
   </a>
@@ -12,7 +15,7 @@
   <br>
 </p>
 
-### How to use
+## How to use
 One way to use the shellshock.h header is to:
 - Create a 'Shellshock' object
 - Resolve functions that you intend to use with the 'load_' member functions
@@ -23,40 +26,40 @@ Once something like this is achieved, you can compile the binary to an object
 file and dump the `.text` section out to a whatever you like. That dump **should**  
 be position independent.
 
-### Integration Using CMake (MinGW)
+## Integration Using CMake
+### System-wide installation
 ```bash
 git clone https://github.com/0xvpr/vpr-shell-shock.git
 cd vpr-shell-shock
-mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=</your/desired/path/>
-make install
+cmake -DCMAKE_INSTALL_PREFIX=/your/desired/path/ -B build
+cmake --install build
 ```
 
-OR
-
+### Local installation (fetch directly from github)
 ```cmake
-include(FetchContent)
+//set( CMAKE_C_STANDARD   89 ) # at least c89 if using c
+//set( CMAKE_CXX_STANDARD 17 ) # at least c++17 if using cpp
 
+include(FetchContent)
 FetchContent_Declare(
   vpr-shell-shock
   GIT_REPOSITORY https://github.com/0xvpr/vpr-shell-shock.git
   GIT_TAG main  # Or use a specific version tag like "v1.0.0"
 )
-
 FetchContent_MakeAvailable(vpr-shell-shock)
 
-add_executable(myapp main.cpp)
-target_link_libraries(myapp PRIVATE vpr-shell-shock::shell-shock)
+add_executable(app main.cpp)
+target_link_libraries(app PRIVATE vpr-shell-shock::shell-shock)
 ```
 
 ### Quick Example
 ```cpp
-#include "include/vpr/shellshock.h"
+#include "vpr/shellshock.h"
 
 typedef int (WINAPI * MessageBoxA_t)(HWND, LPCSTR, LPCSTR, UINT);
 
 extern "C" int payload_cpp(void) {
-    auto ss = ss::shellshock();
+    auto ss = vpr::ss::shellshock();
 
     // Load target function into a temporary variable.
     char szMessageBoxA[] = "MessageBoxA";
@@ -71,7 +74,7 @@ extern "C" int payload_cpp(void) {
 }
 ```
 
-If you want the payload to be immediately exported to a file,  
+If you are using MinGW and you want the payload to be immediately exported to a file,  
 you can do the following:
 ```cpp
 // Payload that will be exported to shellcode
