@@ -37,7 +37,7 @@ cmake --install build
 
 ### Local installation (fetch directly from github)
 ```cmake
-//set( CMAKE_C_STANDARD   89 ) # at least c89 if using c
+//set( CMAKE_C_STANDARD   99 ) # at least c99 if using c
 //set( CMAKE_CXX_STANDARD 17 ) # at least c++17 if using cpp
 
 include(FetchContent)

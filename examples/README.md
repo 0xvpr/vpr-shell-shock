@@ -1,10 +1,10 @@
 # Example Usages
-The header can be used with C++17 and above, and C89 and above
+The header can be used with C++17 and above, and C99 and above
 
 ## C++ API
 ```cpp
 extern "C" int payload_cpp(void) {
-    auto ss = ss::shellshock();
+    auto ss = vpr::ss::shellshock();
 
     // Load target function into a temporary variable.
     char szMessageBoxA[] = "MessageBoxA";

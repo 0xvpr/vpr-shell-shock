@@ -5,7 +5,7 @@
  * Updated by:      VPR
  * Updated:         March 9th, 2025
  *
- * Description:     C/C++ Header only library for position independent shell-code generation.
+ * Description:     C99/C++17 Header only library for position independent shell-code generation.
  *
  * Credits:
  *                  Credits due to Dark VortEx of https://bruteratel.com
